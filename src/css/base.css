@@ -1,0 +1,130 @@
+* {
+  box-sizing: border-box;
+}
+html, input {
+  font-family:
+
+    Helvetica,
+    Arial,
+    sans-serif;
+}
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  background-color: #000;
+}
+ul {
+  list-style: none;
+  word-wrap: break-word;
+}
+.pages {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+}
+.page {
+  height: 100%;
+  width: 100%;
+}
+.user.page {
+  background-color: #000;
+}
+.user.page .form {
+  height: 100px;
+  margin-top: -100px;
+  position: absolute;
+
+  text-align: center;
+  top: 40%;
+  width: 100%;
+}
+.user.page .form .datainput   {
+  background-color: transparent;
+  border: none;
+  border-bottom: 2px solid #444;
+  outline: none;
+  padding-top: 30px;
+  padding-bottom: 15px;
+  text-align: center;
+  width: 300px;
+}
+.user.page .form .datainput:focus    {
+  border-bottom: 2px solid #fff;
+}
+.user.page .title ,.submitbtn {
+  font-size: 200%;
+}
+.user.page .datainput{
+  font-size: 150%;
+  letter-spacing: 3px;
+}
+.user.page .title, .datainput ,.submitbtn {
+  color: #fff;
+  font-weight: 100;
+}
+.user.page .submitbtn {
+  color: #444;
+  font-weight: 100;
+}
+.user.page .submitbtn{  
+  background-color: transparent;
+  border: 2px solid #444;
+  width: 150px;
+  padding: 5px;
+  text-align: center;
+  margin: 30px auto;
+}
+.user.page .submitbtn:hover{ 
+  color: #fff; 
+  border: 2px solid #fff;
+}
+.user.page .scoreform {
+  height: 100px;
+  margin-top: -100px;
+  position: absolute;
+
+  text-align: center;
+  top: 35%;
+  width: 100%;
+}
+.user.page .scorelist{ 
+  padding:50px;
+}
+.user.page .rankitem .rankdata{ 
+  color: #fff; 
+  padding:15;
+  font-size: 130%;
+  border: none;
+  border-bottom: 2px solid #fff;
+}
+.user.page .rankitem .rankdata:hover{ 
+  color: #444; 
+  border-bottom: 2px solid #444;
+}
+.user.page .rankitem .rankbar{ 
+  color: #fff; 
+  padding:15;
+  font-size: 100%;
+  border: none;
+  border-bottom: 2px solid #fff;
+}
+.user.page .tablebtn{ 
+  color: #444; 
+  padding:15;
+  font-size: 130%;
+  border: none;
+  border-bottom: 2px solid #444;
+  margin-bottom: 15px
+}
+.user.page .clicked { 
+  color: #fff; 
+  padding:15;
+  font-size: 130%;
+  border: none;
+  border-bottom: 2px solid #fff;
+}
+
+
+
