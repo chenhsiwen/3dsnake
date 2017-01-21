@@ -5,6 +5,7 @@ import LogoutPage from './LogoutPage';
 import SignupPage from './SignupPage';
 import RankPage from './RankPage';
 import NewScorePage from './NewScorePage';
+import Simple from './Simple';
 class App extends Component {
   constructor(props) {
     super(props);
@@ -46,6 +47,9 @@ class App extends Component {
       if (this.state.route === '/rank') {
         return <RankPage user={this.state.user} />;
       }
+      if (this.state.route === '/game') {
+        return <Simple/>;
+      }
     }
     return <HomePage />;
   }
@@ -62,8 +66,9 @@ class App extends Component {
       return(
         <ul className="nav navbar-nav navbar-right">
           <li><a href='#/user'>Hi~ {this.state.user.username}</a></li>
-           <li><a href='#/rank'>rank</a></li>
+          <li><a href='#/rank'>rank</a></li>
           <li><a href='#/logout'>log out</a></li>
+          <li><a href='#/game'>game</a></li>
         </ul>
       )
   }
