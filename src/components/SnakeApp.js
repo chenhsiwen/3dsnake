@@ -11,6 +11,7 @@ class SnakeApp extends React.Component {
     this.size = 400;
     this.scale = 20;
 
+    this.cameraPosition = new THREE.Vector3(0, 0, 3000);
     // the edge at gridScale * gridSize / -gridScale * gridSize
     // gridStep is the number of division of each axis
     this.gridSize = this.size;
@@ -19,7 +20,6 @@ class SnakeApp extends React.Component {
 
     this.sideLength = 2 * this.size * this.scale / this.gridStep;
     
-    this.cameraPosition = new THREE.Vector3(0, 0, 3000);
     this.gridPosition = [
       new THREE.Vector3(0, 0, 0), 
       new THREE.Vector3(0, 0, this.sideLength), 
@@ -42,7 +42,6 @@ class SnakeApp extends React.Component {
     ];
 
     this.state = {
-      view: "sky",  // sky, front, gaze
       player: [
         {
           user: "1",
@@ -59,6 +58,7 @@ class SnakeApp extends React.Component {
             new THREE.Vector3(9, 0, 0.5).multiplyScalar(this.sideLength),
           ],
           direction: 39,
+          view: "",  // detect, front, gaze
         },
         {
           user: "2",
@@ -75,6 +75,7 @@ class SnakeApp extends React.Component {
             new THREE.Vector3(-10, -1, 0.5).multiplyScalar(this.sideLength),
           ],
           direction: 37,
+          view: "",  // detect, front, gaze
         }
       ],
     };
@@ -124,6 +125,15 @@ class SnakeApp extends React.Component {
         if(this._checkBackward(playerInfo[0].path)) {
           playerInfo[0].direction = 40;
         }
+        break;
+      case 68:
+        playerInfo[0].view = 'detect';
+        break;
+      case 70:
+        playerInfo[0].view = 'front';
+        break;
+      case 71:
+        playerInfo[0].view = 'gaze';
         break;
     }
     this.setState({ player: playerInfo });
@@ -250,8 +260,44 @@ class SnakeApp extends React.Component {
     const height = window.innerHeight; // canvas height
 
     const userPath = this.state.player[0].path;
-    let cameraPlayerPos = new THREE.Vector3();
-    cameraPlayerPos.addVectors(userPath[userPath.length-1], new THREE.Vector3(0,0,5000));
+    let lookAt = this.gridPosition[0]; 
+    let cameraPosition = this.cameraPosition;
+    let cameraRotate = new THREE.Euler();
+    if(this.state.player[0].view === '') {
+      lookAt = this.gridPosition[0]; 
+    } else if(this.state.player[0].view === 'detect') {
+      cameraPosition = new THREE.Vector3(0, 0, 3000);
+      cameraPosition.add(userPath[userPath.length-1]);
+      lookAt = userPath[userPath.length-1];
+    } else if(this.state.player[0].view === 'gaze') {
+      cameraRotate = this.gridRotate;
+      cameraPosition = new THREE.Vector3(0, 0, this.sideLength);
+      cameraPosition.add(userPath[userPath.length-1]);
+      lookAt = this.state.player[1].path[this.state.player[1].path.length-1];
+    } else if(this.state.player[0].view === 'front') {
+      cameraRotate = this.gridRotate;
+      cameraPosition = new THREE.Vector3(0, 0, this.sideLength);
+      cameraPosition.add(userPath[userPath.length-1]);
+      lookAt = new THREE.Vector3();
+      switch(this.state.player[0].direction) {
+        case 37:
+          cameraPosition.add(new THREE.Vector3(2 * this.sideLength, 0, 0));
+          lookAt.addVectors(cameraPosition, new THREE.Vector3(-this.sideLength, 0, 0));
+          break;
+        case 38:
+          cameraPosition.add(new THREE.Vector3(0, -2 * this.sideLength, 0));
+          lookAt.addVectors(cameraPosition, new THREE.Vector3(0, this.sideLength, 0));
+          break;
+        case 39:
+          cameraPosition.add(new THREE.Vector3(-2 * this.sideLength, 0, 0));
+          lookAt.addVectors(cameraPosition, new THREE.Vector3(this.sideLength, 0, 0));
+          break;
+        case 40:
+          cameraPosition.add(new THREE.Vector3(0, 2 * this.sideLength, 0));
+          lookAt.addVectors(cameraPosition, new THREE.Vector3(0, -this.sideLength, 0));
+          break;
+      }
+    }
       
     let shape = [[], [], []];
     for(let i = 0, l = this.state.player[0].path.length; i<l; i++) {
@@ -284,8 +330,9 @@ class SnakeApp extends React.Component {
           aspect={width / height}
           near={0.1}
           far={10000}
-          lookAt={userPath[userPath.length-1]}
-          position={cameraPlayerPos}
+          lookAt={lookAt}
+          position={cameraPosition}
+          rotation={cameraRotate}
         />
         <gridHelper 
           size={this.gridSize}
@@ -293,6 +340,7 @@ class SnakeApp extends React.Component {
           scale={this.gridScale}
           rotation={this.gridRotate}
           colorCenterLine={0xffffff}
+          colorGrid={0x444444}
         />
         <object3D>
           <mesh>
@@ -342,6 +390,9 @@ class SnakeApp extends React.Component {
             />
           </mesh>
         </object3D>
+        <cameraHelper
+          cameraName="camera"
+        />
         <object3D
           position={this.gridPosition[0]}
         >
