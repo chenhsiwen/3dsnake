@@ -17,7 +17,7 @@ class SnakeApp extends React.Component {
     // the edge at gridScale * gridSize / -gridScale * gridSize
     // gridStep is the number of division of each axis
     this.gridSize = this.size;
-    this.gridStep = 40;
+    this.gridStep = 20;
     this.gridScale = new THREE.Vector3(20, 20, 20);
 
     this.sideLength = 2 * this.size * this.scale / this.gridStep;
@@ -30,20 +30,26 @@ class SnakeApp extends React.Component {
             new THREE.Vector3(0, 0, 0.5).multiplyScalar(this.sideLength), 
             new THREE.Vector3(1, 0, 0.5).multiplyScalar(this.sideLength)
           ],
-          direction: "right",
+          direction: 39,
         },
         {
           user: "2",
           path: [
-            new THREE.Vector3(0, 0, 0.5).multiplyScalar(this.sideLength), 
-            new THREE.Vector3(-1, 0, 0.5).multiplyScalar(this.sideLength)
+            new THREE.Vector3(-1, -1, 0.5).multiplyScalar(this.sideLength), 
+            new THREE.Vector3(-2, -1, 0.5).multiplyScalar(this.sideLength)
           ],
-          direction: "right",
+          direction: 37,
         }
       ],
     };
 
     this.move = this.move.bind(this);
+    this._checkLeft = this._checkLeft.bind(this);
+    this._checkRight = this._checkRight.bind(this);
+    this._checkForward = this._checkForward.bind(this);
+    this._checkBackward = this._checkBackward.bind(this);
+    this._shouldUp = this._shouldUp.bind(this);
+    this._shouldDown = this._shouldDown.bind(this);
   }
 
   componentDidMount() {
@@ -58,36 +64,138 @@ class SnakeApp extends React.Component {
   componentWillUnmount() {
     document.removeEventListener('keydown', this._onKeyDown, false);
     clearInterval(this.timerID);
-    //delete this.stats;
   }
 
   _onKeyDown = (event) => {
     console.log(event.keyCode);
+    let playerInfo = this.state.player;
+    switch(event.keyCode) {
+      case 37:
+        if(this._checkLeft(playerInfo[0].path)) {
+          playerInfo[0].direction = 37;
+        }
+        break;
+      case 38:
+        if(this._checkForward(playerInfo[0].path)) {
+          playerInfo[0].direction = 38;
+        }
+        break;
+      case 39:
+        if(this._checkRight(playerInfo[0].path)) {
+          playerInfo[0].direction = 39;
+        }
+        break;
+      case 40:
+        if(this._checkBackward(playerInfo[0].path)) {
+          playerInfo[0].direction = 40;
+        }
+        break;
+    }
+    this.setState({ player: playerInfo });
   }
   
   move = () => {
     let playerInfo = this.state.player;
     let playerVertices = [
-      [
-        playerInfo[0].path[0],
-        playerInfo[0].path[1],
-      ],
-      [
-        playerInfo[1].path[0],
-        playerInfo[1].path[1],
-      ]
+      playerInfo[0].path,
+      playerInfo[1].path
     ];
-    playerVertices[0][0].x = playerVertices[0][0].x + this.sideLength;
-    playerVertices[0][1].x = playerVertices[0][1].x + this.sideLength;
-    playerVertices[1][0].x = playerVertices[1][0].x + this.sideLength;
-    playerVertices[1][1].x = playerVertices[0][1].x + this.sideLength;
+    let next = new THREE.Vector3();
+    const now = playerVertices[0][playerVertices[0].length - 1];
+    if(this._shouldDown(playerVertices[0])) {
+      next.set(now.x, now.y, now.z - this.sideLength);
+    } else if(this._shouldUp(playerVertices[0])) {
+      next.set(now.x, now.y, now.z + this.sideLength);
+    } else {
+      switch(this.state.player[0].direction){
+        case 37:
+          console.log('left');
+          next.set(now.x - this.sideLength, now.y, now.z);
+          break;
+        case 38:
+          console.log('forward');
+          next.set(now.x, now.y + this.sideLength, now.z);
+          break;
+        case 39:
+          console.log('right');
+          next.set(now.x + this.sideLength, now.y, now.z);
+          break;
+        case 40:
+          console.log('backward');
+          next.set(now.x, now.y - this.sideLength, now.z);
+          break;
+      }
+    }
+    playerVertices[0].shift();
+    playerVertices[0].push(next);
 
-    playerInfo[0].path[0] = playerVertices[0][0];
-    playerInfo[0].path[1] = playerVertices[0][1];
-    playerInfo[1].path[0] = playerVertices[1][0];
-    playerInfo[1].path[1] = playerVertices[1][1];
-    this.setState({ player: playerInfo });
+    playerInfo[0].path = playerVertices[0];
+    this.setState({ 
+      player: playerInfo 
+    });
     console.log('I move');
+  }
+
+  _checkLeft = (path) => {
+    const now = path[path.length - 1];
+    const prev = path[path.length - 2];
+    if(now.x - this.sideLength === prev.x && now.y === prev.y && now.z === prev.z) {
+      return false;
+    }
+    return true;
+  }
+
+  _checkRight = (path) => {
+    const now = path[path.length - 1];
+    const prev = path[path.length - 2];
+    if(now.x + this.sideLength === prev.x && now.y === prev.y && now.z === prev.z) {
+      return false;
+    }
+    return true;
+  }
+
+  _checkForward = (path) => {
+    const now = path[path.length - 1];
+    const prev = path[path.length - 2];
+    if(now.x === prev.x && now.y + this.sideLength === prev.y && now.z === prev.z) {
+      return false;
+    }
+    return true;
+  }
+
+  _checkBackward = (path) => {
+    const now = path[path.length - 1];
+    const prev = path[path.length - 2];
+    if(now.x === prev.x && now.y - this.sideLength === prev.y && now.z === prev.z) {
+      return false;
+    }
+    return true;
+  }
+
+  _shouldUp = (path) => {
+    const now = path[path.length - 1];
+    for(let i = 1, l = path.length; i < l - 3; i++) {
+      if(now.equals(path[i])) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  _shouldDown = (path) => {
+    const now = path[path.length - 1];
+    console.log('in should down', path);
+    console.log(now.x, now.y, now.z);
+    const down = new THREE.Vector3(now.x, now.y, now.z - this.sideLength);
+    if(down.z < 0) {
+      return false;
+    }
+    for(let i = 1, l = path.length; i < l - 1; i++) {
+      if(down.equals(path[i])) {
+        return false;
+      }
+    }
+    return true;
   }
 
   render() {
@@ -136,7 +244,7 @@ class SnakeApp extends React.Component {
             <extrudeGeometry
               shapes={shape}
               steps={2}
-              amount={20}
+              amount={this.sideLength}
               bevelEnable={true}
               bevelThickness={20}
               bevelSize={10}
