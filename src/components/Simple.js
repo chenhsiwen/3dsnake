@@ -3,11 +3,6 @@ import React3 from 'react-three-renderer';
 import * as THREE from 'three';
 
 class Simple extends React.Component {
-  static propTypes = {
-    width: React.PropTypes.number.isRequired,
-    height: React.PropTypes.number.isRequired,
-  };
-
   constructor(props, context) {
     super(props, context);
 
@@ -39,7 +34,6 @@ class Simple extends React.Component {
   render() {
     const width = window.innerWidth; // canvas width
     const height = window.innerHeight; // canvas height
-
     // or you can use:
     // width = window.innerWidth
     // height = window.innerHeight

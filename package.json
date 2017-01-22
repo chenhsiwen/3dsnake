@@ -21,11 +21,14 @@
     "isomorphic-fetch": "^2.2.1",
     "mongoose": "^4.7.2",
     "react": "^15.4.1",
+    "react-dimensions": "^1.3.0",
     "react-dom": "^15.4.1",
     "react-quill": "^0.4.1",
+    "react-sizeme": "^2.2.0",
     "react-tagsinput": "^3.13.6",
     "react-three-renderer": "^3.0.2",
     "stats": "^1.0.0",
+    "stats.js": "^0.17.0",
     "three": "^0.82.1"
   },
   "devDependencies": {
