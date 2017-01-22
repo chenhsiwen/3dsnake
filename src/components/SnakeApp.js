@@ -41,6 +41,28 @@ class SnakeApp extends React.Component {
           new THREE.Vector3(-100 * this.sideLength, -100 * this.sideLength, 0)),
     ];
 
+    let foods = [];
+    foods.push(new THREE.Vector3(0, 1, 0.5).multiplyScalar(this.sideLength));
+    for(let i = 0; i < 100; i++) {
+      let tx = (Math.random() - 0.5) * this.gridStep;
+      let ty = (Math.random() - 0.5) * this.gridStep;
+      let tz = 0.5;
+      let l = foods.length;
+      let newFood = new THREE.Vector3(tx, ty, tz).multiplyScalar(this.sideLength);
+      let exist = false;
+      for(let j = 0; j < l; j++) {
+        if(newFood.equals(foods[j])) {
+          exist = true;
+          break;
+        }
+      }
+      if(exist) {
+        i -= 1;
+        continue;
+      }
+      foods.push(newFood);
+    }
+
     this.state = {
       player: [
         {
@@ -78,6 +100,7 @@ class SnakeApp extends React.Component {
           view: "",  // detect, front, gaze
         }
       ],
+      food: foods,
     };
 
     this.move = this.move.bind(this);
@@ -135,6 +158,9 @@ class SnakeApp extends React.Component {
       case 71:
         playerInfo[0].view = 'gaze';
         break;
+      case 83:
+        playerInfo[0].view = '';
+        break;
     }
     this.setState({ player: playerInfo });
   }
@@ -171,12 +197,45 @@ class SnakeApp extends React.Component {
           break;
       }
     }
-    playerVertices[0].shift();
+    let foods = this.state.food;
+    let exist = false;
+    let indexOfNext = -1;
+    for(let i = 0, l = foods.length; i < l; i++) {
+      if(next.equals(foods[i])) {
+        exist = true;
+        indexOfNext = i;
+        break;
+      }
+    }
+    if(!exist) {
+      playerVertices[0].shift();
+    } else {
+      console.log('ate');
+      let tx = (Math.random() - 0.5) * this.gridStep;
+      let ty = (Math.random() - 0.5) * this.gridStep;
+      let tz = 0.5;
+      let newFood = new THREE.Vector3(tx, ty, tz).multiplyScalar(this.sideLength);
+      while(exist) {
+        tx = (Math.random() - 0.5) * this.gridStep;
+        ty = (Math.random() - 0.5) * this.gridStep;
+        newFood = new THREE.Vector3(tx, ty, tz).multiplyScalar(this.sideLength);
+        exist = false;
+        for(let i = 0, l = foods.length; i < l; i++) {
+          if(newFood.equals(foods[i])) {
+            exist = true;
+            break;
+          }
+        }
+      }
+      foods.splice(indexOfNext);
+      foods.push(newFood);
+    }
     playerVertices[0].push(next);
 
     playerInfo[0].path = playerVertices[0];
     this.setState({ 
-      player: playerInfo 
+      player: playerInfo,
+      food: foods,
     });
   }
 
@@ -309,12 +368,21 @@ class SnakeApp extends React.Component {
       let j = 0;
       while(userPath[i].z - (j + 1) * this.sideLength > 0) {
         j += 1;
-        console.log('up to', j);
       }
       if(j > shape.length - 1) {
         continue;
       }
       shape[j].push(s);
+    }
+
+    let foodshape = [];
+    for(let item of this.state.food) {
+      let s = new THREE.Shape();
+      s.moveTo(item.x, item.y);
+      s.lineTo(item.x + this.sideLength, item.y);
+      s.lineTo(item.x + this.sideLength, item.y + this.sideLength);
+      s.lineTo(item.x, item.y + this.sideLength);
+      foodshape.push(s);
     }
 
     return (<React3
@@ -342,61 +410,31 @@ class SnakeApp extends React.Component {
           colorCenterLine={0xffffff}
           colorGrid={0x444444}
         />
-        <object3D>
-          <mesh>
-            <tubeGeometry
-              path={this.boundary[0]}
-              radius={this.sideLength/2}
-            />
-            <meshBasicMaterial
-              color={0xff0000}
-              wireframe
-            />
-          </mesh>
-        </object3D>
-        <object3D>
-          <mesh>
-            <tubeGeometry
-              path={this.boundary[1]}
-              radius={this.sideLength/2}
-            />
-            <meshBasicMaterial
-              color={0xff0000}
-              wireframe
-            />
-          </mesh>
-        </object3D>
-        <object3D>
-          <mesh>
-            <tubeGeometry
-              path={this.boundary[2]}
-              radius={this.sideLength/2}
-            />
-            <meshBasicMaterial
-              color={0xff0000}
-              wireframe
-            />
-          </mesh>
-        </object3D>
-        <object3D>
-          <mesh>
-            <tubeGeometry
-              path={this.boundary[3]}
-              radius={this.sideLength/2}
-            />
-            <meshBasicMaterial
-              color={0xff0000}
-              wireframe
-            />
-          </mesh>
-        </object3D>
         <cameraHelper
           cameraName="camera"
         />
-        <object3D
-          position={this.gridPosition[0]}
-        >
-          <mesh>
+        <object3D>
+          <mesh
+            position={this.gridPosition[0]}
+          >
+            <extrudeGeometry
+              shapes={foodshape[0]}
+              steps={2}
+              amount={this.sideLength}
+              bevelEnable={true}
+              bevelThickness={20}
+              bevelSize={10}
+              bevelSegments={1}
+              dynamic={true}
+            />
+            <meshBasicMaterial
+              color={0x00ff00}
+              wireframe
+            />
+          </mesh>
+          <mesh
+            position={this.gridPosition[0]}
+          >
             <extrudeGeometry
               shapes={shape[0]}
               steps={2}
@@ -410,11 +448,9 @@ class SnakeApp extends React.Component {
             <meshNormalMaterial
             />
           </mesh>
-        </object3D>
-        <object3D
-          position={this.gridPosition[1]}
-        >
-          <mesh>
+          <mesh
+            position={this.gridPosition[1]}
+          >  
             <extrudeGeometry
               shapes={shape[1]}
               steps={2}
@@ -428,11 +464,9 @@ class SnakeApp extends React.Component {
             <meshNormalMaterial
             />
           </mesh>
-        </object3D>
-        <object3D
-          position={this.gridPosition[2]}
-        >
-          <mesh>
+          <mesh
+            position={this.gridPosition[2]}
+          >  
             <extrudeGeometry
               shapes={shape[2]}
               steps={2}
@@ -444,6 +478,48 @@ class SnakeApp extends React.Component {
               dynamic={true}
             />
             <meshNormalMaterial
+            />
+          </mesh>
+        </object3D>
+        <object3D>
+          <mesh>
+            <tubeGeometry
+              path={this.boundary[0]}
+              radius={this.sideLength/2}
+            />
+            <meshBasicMaterial
+              color={0xff0000}
+              wireframe
+            />
+          </mesh>
+          <mesh>
+            <tubeGeometry
+              path={this.boundary[1]}
+              radius={this.sideLength/2}
+            />
+            <meshBasicMaterial
+              color={0xff0000}
+              wireframe
+            />
+          </mesh>
+          <mesh>
+            <tubeGeometry
+              path={this.boundary[2]}
+              radius={this.sideLength/2}
+            />
+            <meshBasicMaterial
+              color={0xff0000}
+              wireframe
+            />
+          </mesh>
+          <mesh>
+            <tubeGeometry
+              path={this.boundary[3]}
+              radius={this.sideLength/2}
+            />
+            <meshBasicMaterial
+              color={0xff0000}
+              wireframe
             />
           </mesh>
         </object3D>
