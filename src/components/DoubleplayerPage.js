@@ -91,6 +91,7 @@ class DoubleplyerPage extends React.Component {
         }
       ],
       food: foods,
+      
     };
 
     this.move = this.move.bind(this);
@@ -230,15 +231,18 @@ class DoubleplyerPage extends React.Component {
 
     playerInfo[0].path = playerVertices[0];
     this.setState({ 
-      player: playerInfo,
       food: foods,
     });
-    
-    this.socket.emit('mysnake', this.state.player[0]); 
+    this.socket.emit('game', this.state.player[0]); 
     let that = this;
     this.socket.on('enemy', function(data) {
       let playerInfo = that.state.player;
       playerInfo[1] = data;
+      that.setState({ player: playerInfo });
+    });
+    this.socket.on('mysnake', function(data) {
+      let playerInfo = that.state.player;
+      playerInfo[0] = data;
       that.setState({ player: playerInfo });
     });
   }

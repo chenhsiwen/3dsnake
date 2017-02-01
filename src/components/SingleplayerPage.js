@@ -10,7 +10,7 @@ class SingleplayerPage extends React.Component {
 
     this.size = 400;
     this.scale = 20;
-
+    this.socket = io();
     this.cameraPosition = new THREE.Vector3(0, 0, 3000);
     // the edge at gridScale * gridSize / -gridScale * gridSize
     // gridStep is the number of division of each axis
@@ -97,7 +97,7 @@ class SingleplayerPage extends React.Component {
 
   componentDidMount() {
     document.addEventListener('keydown', this._onKeyDown, false);
-
+    
     this.timerID = setInterval(
         () => this.move(),
         500
@@ -108,7 +108,7 @@ class SingleplayerPage extends React.Component {
     document.removeEventListener('keydown', this._onKeyDown, false);
     clearInterval(this.timerID);
   }
-
+ 
   _onKeyDown = (event) => {
     let playerInfo = this.state.player;
     switch(event.keyCode) {
