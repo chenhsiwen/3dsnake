@@ -53,30 +53,36 @@ ul {
 .user.page .form .datainput:focus    {
   border-bottom: 2px solid #fff;
 }
-.user.page .title ,.submitbtn {
+.user.page .title ,.submitbtn ,.gamebtn{
+  text-decoration: none;
   font-size: 200%;
 }
 .user.page .datainput{
   font-size: 150%;
   letter-spacing: 3px;
 }
-.user.page .title, .datainput ,.submitbtn {
+.user.page .title, .datainput ,.submitbtn ,.gamebtn{
   color: #fff;
   font-weight: 100;
 }
-.user.page .submitbtn {
+.user.page .submitbtn ,.gamebtn{
   color: #444;
   font-weight: 100;
 }
-.user.page .submitbtn{  
+
+.user.page .submitbtn ,.gamebtn{  
   background-color: transparent;
   border: 2px solid #444;
-  width: 150px;
-  padding: 5px;
+  width: 300px;
+  padding: 7px;
   text-align: center;
   margin: 30px auto;
 }
 .user.page .submitbtn:hover{ 
+  color: #fff; 
+  border: 2px solid #fff;
+}
+.user.page .gamebtn:hover{ 
   color: #fff; 
   border: 2px solid #fff;
 }

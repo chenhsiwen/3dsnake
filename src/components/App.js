@@ -7,7 +7,8 @@ import RankPage from './RankPage';
 import NewScorePage from './NewScorePage';
 import GamePage from './GamePage';
 import Simple from './Simple';
-import SnakeApp from './SnakeApp';
+import DoubleplayerPage from './DoubleplayerPage';
+import Singleplayer from './SingleplayerPage';
 class App extends Component {
   constructor(props) {
     super(props);
@@ -53,10 +54,13 @@ class App extends Component {
         return <GamePage user={this.state.user}/>;
       }
       if (this.state.route === '/simple') {
-        return <Simple/>;
+        return <Simple user={this.state.user}/>;
       }
-      if (this.state.route === '/snake') {
-        return <SnakeApp/>;
+      if (this.state.route === '/singleplayer') {
+        return <Singleplayer user={this.state.user}/>;
+      }
+      if (this.state.route === '/doubleplayer') {
+        return <DoubleplayerPage user={this.state.user}/>;
       }
     }
     return <HomePage />;

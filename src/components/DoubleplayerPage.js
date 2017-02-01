@@ -4,7 +4,7 @@ import * as THREE from 'three';
 
 import Stats from 'stats.js';
 
-class SnakeApp extends React.Component {
+class DoubleplyerPage extends React.Component {
   constructor(props, context) {
     super(props, context);
 
@@ -62,11 +62,12 @@ class SnakeApp extends React.Component {
       }
       foods.push(newFood);
     }
+    
 
     this.state = {
       player: [
         {
-          user: "1",
+          user: this.props.user.uid,
           path: [
             new THREE.Vector3(0, 0, 0.5).multiplyScalar(this.sideLength), 
             new THREE.Vector3(1, 0, 0.5).multiplyScalar(this.sideLength),
@@ -83,20 +84,9 @@ class SnakeApp extends React.Component {
           view: "",  // detect, front, gaze
         },
         {
-          user: "2",
-          path: [
-            new THREE.Vector3(-1, -1, 0.5).multiplyScalar(this.sideLength), 
-            new THREE.Vector3(-2, -1, 0.5).multiplyScalar(this.sideLength),
-            new THREE.Vector3(-3, -1, 0.5).multiplyScalar(this.sideLength),
-            new THREE.Vector3(-4, -1, 0.5).multiplyScalar(this.sideLength),
-            new THREE.Vector3(-5, -1, 0.5).multiplyScalar(this.sideLength),
-            new THREE.Vector3(-6, -1, 0.5).multiplyScalar(this.sideLength), 
-            new THREE.Vector3(-7, -1, 0.5).multiplyScalar(this.sideLength),
-            new THREE.Vector3(-8, -1, 0.5).multiplyScalar(this.sideLength),
-            new THREE.Vector3(-9, -1, 0.5).multiplyScalar(this.sideLength),
-            new THREE.Vector3(-10, -1, 0.5).multiplyScalar(this.sideLength),
-          ],
-          direction: 37,
+          user2: {},
+          path: [],
+          direction: 0,
           view: "",  // detect, front, gaze
         }
       ],
@@ -110,6 +100,11 @@ class SnakeApp extends React.Component {
     this._checkBackward = this._checkBackward.bind(this);
     this._shouldUp = this._shouldUp.bind(this);
     this._shouldDown = this._shouldDown.bind(this);
+
+    this.socket = io();
+    this.socket.emit('newuser', this.props.user.uid); 
+
+
   }
 
   componentDidMount() {
@@ -119,6 +114,7 @@ class SnakeApp extends React.Component {
         () => this.move(),
         500
     );
+
   }
 
   componentWillUnmount() {
@@ -237,6 +233,14 @@ class SnakeApp extends React.Component {
       player: playerInfo,
       food: foods,
     });
+    
+    this.socket.emit('mysnake', this.state.player[0]); 
+    let that = this;
+    this.socket.on('enemy', function(data) {
+      let playerInfo = that.state.player;
+      playerInfo[1] = data;
+      that.setState({ player: playerInfo });
+    });
   }
 
   _checkLeft = (path) => {
@@ -319,6 +323,7 @@ class SnakeApp extends React.Component {
     const height = window.innerHeight; // canvas height
 
     const userPath = this.state.player[0].path;
+    const otherPath = this.state.player[1].path;
     let lookAt = this.gridPosition[0]; 
     let cameraPosition = this.cameraPosition;
     let cameraRotate = new THREE.Euler();
@@ -358,7 +363,7 @@ class SnakeApp extends React.Component {
       }
     }
       
-    let shape = [[], [], []];
+    let usershape = [[], [], []];
     for(let i = 0, l = this.state.player[0].path.length; i<l; i++) {
       let s = new THREE.Shape();
       s.moveTo(userPath[i].x, userPath[i].y);
@@ -369,12 +374,27 @@ class SnakeApp extends React.Component {
       while(userPath[i].z - (j + 1) * this.sideLength > 0) {
         j += 1;
       }
-      if(j > shape.length - 1) {
+      if(j > usershape.length - 1) {
         continue;
       }
-      shape[j].push(s);
+      usershape[j].push(s);
     }
-
+    let othershape = [[], [], []];
+    for(let i = 0, l = this.state.player[1].path.length; i<l; i++) {
+      let s = new THREE.Shape();
+      s.moveTo(otherPath[i].x, otherPath[i].y);
+      s.lineTo(otherPath[i].x + this.sideLength, otherPath[i].y);
+      s.lineTo(otherPath[i].x + this.sideLength, otherPath[i].y + this.sideLength);
+      s.lineTo(otherPath[i].x, otherPath[i].y + this.sideLength);
+      let j = 0;
+      while(otherPath[i].z - (j + 1) * this.sideLength > 0) {
+        j += 1;
+      }
+      if(j > othershape.length - 1) {
+        continue;
+      }
+      othershape[j].push(s);
+    }
     let foodshape = [];
     for(let item of this.state.food) {
       let s = new THREE.Shape();
@@ -435,8 +455,9 @@ class SnakeApp extends React.Component {
           <mesh
             position={this.gridPosition[0]}
           >
+
             <extrudeGeometry
-              shapes={shape[0]}
+              shapes={usershape[0]}
               steps={2}
               amount={this.sideLength}
               bevelEnable={true}
@@ -452,7 +473,7 @@ class SnakeApp extends React.Component {
             position={this.gridPosition[1]}
           >  
             <extrudeGeometry
-              shapes={shape[1]}
+              shapes={usershape[1]}
               steps={2}
               amount={this.sideLength}
               bevelEnable={true}
@@ -468,7 +489,56 @@ class SnakeApp extends React.Component {
             position={this.gridPosition[2]}
           >  
             <extrudeGeometry
-              shapes={shape[2]}
+              shapes={usershape[2]}
+              steps={2}
+              amount={this.sideLength}
+              bevelEnable={true}
+              bevelThickness={20}
+              bevelSize={10}
+              bevelSegments={1}
+              dynamic={true}
+            />
+            <meshNormalMaterial
+            />
+          </mesh>
+        <mesh
+            position={this.gridPosition[0]}
+          >
+
+            <extrudeGeometry
+              shapes={othershape[0]}
+              steps={2}
+              amount={this.sideLength}
+              bevelEnable={true}
+              bevelThickness={20}
+              bevelSize={10}
+              bevelSegments={1}
+              dynamic={true}
+            />
+            <meshNormalMaterial
+            />
+          </mesh>
+          <mesh
+            position={this.gridPosition[1]}
+          >  
+            <extrudeGeometry
+              shapes={othershape[1]}
+              steps={2}
+              amount={this.sideLength}
+              bevelEnable={true}
+              bevelThickness={20}
+              bevelSize={10}
+              bevelSegments={1}
+              dynamic={true}
+            />
+            <meshNormalMaterial
+            />
+          </mesh>
+          <mesh
+            position={this.gridPosition[2]}
+          >  
+            <extrudeGeometry
+              shapes={othershape[2]}
               steps={2}
               amount={this.sideLength}
               bevelEnable={true}
@@ -529,5 +599,5 @@ class SnakeApp extends React.Component {
   }
 }
 
-export default SnakeApp;
+export default DoubleplyerPage;
 

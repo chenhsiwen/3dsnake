@@ -27,6 +27,7 @@
     "react-sizeme": "^2.2.0",
     "react-tagsinput": "^3.13.6",
     "react-three-renderer": "^3.0.2",
+    "socket.io-client": "^1.7.2",
     "stats": "^1.0.0",
     "stats.js": "^0.17.0",
     "three": "^0.82.1"

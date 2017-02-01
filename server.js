@@ -2,12 +2,13 @@
 import path from 'path';
 import express from 'express';
 import webpack from 'webpack';
+import http from 'http';
 import bodyParser from 'body-parser';
 import api from './src/api/';
 import config from './webpack.config';
-import  firebase from 'firebase';
+import firebase from 'firebase';
 import dbconfig from './dbconfig';
-
+import socketio from 'socket.io';
 
 firebase.initializeApp(dbconfig);
 
@@ -35,11 +36,45 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-app.listen(port, err => {
+const server = app.listen(port, err => {
   if (err) {
     console.log(err);
     return;
   }
-
   console.log(`Listening at http://localhost:${port}`);
+});
+
+const io = socketio.listen(server); 
+let rooms = [];
+io.on('connection', function(socket){
+  let trigger = 0; 
+  socket.on('newuser', function(newuser) { 
+    for(let i = 0; i < rooms.length; i++){
+      if(rooms[i].length<2){
+        if (rooms[i].length === 0||(rooms[i].length === 1 && rooms[i][0].user != newuser)){
+          rooms[i].push({user: newuser, socket: socket});
+          trigger = 1 ;
+        }
+      }
+    }
+    if (!trigger){
+      rooms.push([{user: newuser, socket: socket}]);
+    }
+  }); 
+  socket.on('mysnake', function(data) { 
+    for(let i = 0; i < rooms.length; i++){
+      for(let j = 0; j < rooms[i].length; j++){
+        if(data.user === rooms[i][j].user){
+          if (j === 0  ){
+            if (rooms[i].length === 2){ 
+              rooms[i][1].socket.emit('enemy', data);
+            }
+          }
+          else {
+            rooms[i][0].socket.emit('enemy', data);
+          }
+        }
+      }
+    }
+  });  
 });
