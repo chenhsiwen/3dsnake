@@ -1,8 +1,8 @@
 {
   "private": true,
-  "name": "blog-starter",
+  "name": "3D-snake",
   "version": "0.1.0",
-  "description": "Blog starter",
+  "description": "3D-snake",
   "license": "MIT",
   "main": "server.js",
   "scripts": {
