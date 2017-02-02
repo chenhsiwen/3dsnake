@@ -339,8 +339,7 @@ class DoubleplyerPage extends React.Component {
       foodshape.push(s);
     }
 
-    const foods = foodshape.map((food, index) => {
-      return (
+    const foods = (
         <mesh
           position={this.gridPosition[0]}
         >
@@ -359,7 +358,7 @@ class DoubleplyerPage extends React.Component {
             wireframe
           />
         </mesh>
-    )});
+    );
     return (
       <group>
         {foods}
