@@ -119,6 +119,8 @@ class DoubleplyerPage extends React.Component {
   }
 
   componentWillUnmount() {
+    this.socket.emit('disconnect', this.props.user.uid); 
+    console.log('leave');
     document.removeEventListener('keydown', this._onKeyDown, false);
     clearInterval(this.timerID);
   }
@@ -161,6 +163,8 @@ class DoubleplyerPage extends React.Component {
     }
     this.setState({ player: playerInfo });
   }
+
+
   
   move = () => {
     let playerInfo = this.state.player;
