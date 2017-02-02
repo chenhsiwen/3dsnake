@@ -45,39 +45,6 @@ const server = app.listen(port, err => {
 });
 
 const io = socketio.listen(server); 
-// let rooms = [];
-// io.on('connection', function(socket){
-//   let trigger = 0; 
-//   socket.on('newuser', function(newuser) { 
-//     for(let i = 0; i < rooms.length; i++){
-//       if(rooms[i].length<2){
-//         if (rooms[i].length === 0||(rooms[i].length === 1 && rooms[i][0].user != newuser)){
-//           rooms[i].push({user: newuser, socket: socket});
-//           trigger = 1 ;
-//         }
-//       }
-//     }
-//     if (!trigger){
-//       rooms.push([{user: newuser, socket: socket}]);
-//     }
-//   }); 
-//   socket.on('mysnake', function(data) { 
-//     for(let i = 0; i < rooms.length; i++){
-//       for(let j = 0; j < rooms[i].length; j++){
-//         if(data.user === rooms[i][j].user){
-//           if (j === 0  ){
-//             if (rooms[i].length === 2){ 
-//               rooms[i][1].socket.emit('enemy', data);
-//             }
-//           }
-//           else {
-//             rooms[i][0].socket.emit('enemy', data);
-//           }
-//         }
-//       }
-//     }
-//   });  
-// });
 let buffer = [];
 let rooms  = {};
 
