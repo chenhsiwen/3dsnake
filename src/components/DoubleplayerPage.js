@@ -101,6 +101,8 @@ class DoubleplyerPage extends React.Component {
     this._checkBackward = this._checkBackward.bind(this);
     this._shouldUp = this._shouldUp.bind(this);
     this._shouldDown = this._shouldDown.bind(this);
+    this.renderFood = this.renderFood.bind(this);
+    this.renderSnake = this.renderSnake.bind(this);
 
     this.socket = io();
     this.socket.emit('newuser', this.props.user.uid); 
@@ -322,12 +324,97 @@ class DoubleplyerPage extends React.Component {
     return true;
   }
 
+  renderFood = () => {
+    let foodshape = [];
+    for(let item of this.state.food) {
+      let s = new THREE.Shape();
+      s.moveTo(item.x, item.y);
+      s.lineTo(item.x + this.sideLength, item.y);
+      s.lineTo(item.x + this.sideLength, item.y + this.sideLength);
+      s.lineTo(item.x, item.y + this.sideLength);
+      foodshape.push(s);
+    }
+
+    const foods = foodshape.map((food, index) => {
+      return (
+        <mesh
+          position={this.gridPosition[0]}
+        >
+          <extrudeGeometry
+            shapes={foodshape}
+            steps={2}
+            amount={this.sideLength}
+            bevelEnable={true}
+            bevelThickness={20}
+            bevelSize={10}
+            bevelSegments={1}
+            dynamic={true}
+          />
+          <meshBasicMaterial
+            color={0x00ff00}
+            wireframe
+          />
+        </mesh>
+    )});
+    return (
+      <group>
+        {foods}
+      </group>
+    );
+  }
+
+  renderSnake = (path) => {
+    let shape = [[], [], [], [], [], []];
+    for(let i = 0, l = path.length; i<l; i++) {
+      let s = new THREE.Shape();
+      s.moveTo(path[i].x, path[i].y);
+      s.lineTo(path[i].x + this.sideLength, path[i].y);
+      s.lineTo(path[i].x + this.sideLength, path[i].y + this.sideLength);
+      s.lineTo(path[i].x, path[i].y + this.sideLength);
+      let j = 0;
+      while(path[i].z - (j + 1) * this.sideLength > 0) {
+        j += 1;
+      }
+      if(j > shape.length - 1) {
+        continue;
+      }
+      shape[j].push(s);
+    }
+
+    const snake = shape.map((layer, index) => {
+      return (
+        <mesh
+          position={this.gridPosition[index]}
+        >
+          <extrudeGeometry
+            shapes={layer}
+            steps={2}
+            amount={this.sideLength}
+            bevelEnable={true}
+            bevelThickness={20}
+            bevelSize={10}
+            bevelSegments={1}
+            dynamic={true}
+          />
+          <meshNormalMaterial
+          />
+        </mesh>
+    )});
+
+    return (
+      <group>
+        {snake}
+      </group>
+    );
+  }
+
   render() {
     const width = window.innerWidth; // canvas width
     const height = window.innerHeight; // canvas height
 
     const userPath = this.state.player[0].path;
     const otherPath = this.state.player[1].path;
+
     let lookAt = this.gridPosition[0]; 
     let cameraPosition = this.cameraPosition;
     let cameraRotate = new THREE.Euler();
@@ -367,47 +454,7 @@ class DoubleplyerPage extends React.Component {
       }
     }
       
-    let usershape = [[], [], []];
-    for(let i = 0, l = this.state.player[0].path.length; i<l; i++) {
-      let s = new THREE.Shape();
-      s.moveTo(userPath[i].x, userPath[i].y);
-      s.lineTo(userPath[i].x + this.sideLength, userPath[i].y);
-      s.lineTo(userPath[i].x + this.sideLength, userPath[i].y + this.sideLength);
-      s.lineTo(userPath[i].x, userPath[i].y + this.sideLength);
-      let j = 0;
-      while(userPath[i].z - (j + 1) * this.sideLength > 0) {
-        j += 1;
-      }
-      if(j > usershape.length - 1) {
-        continue;
-      }
-      usershape[j].push(s);
-    }
-    let othershape = [[], [], []];
-    for(let i = 0, l = this.state.player[1].path.length; i<l; i++) {
-      let s = new THREE.Shape();
-      s.moveTo(otherPath[i].x, otherPath[i].y);
-      s.lineTo(otherPath[i].x + this.sideLength, otherPath[i].y);
-      s.lineTo(otherPath[i].x + this.sideLength, otherPath[i].y + this.sideLength);
-      s.lineTo(otherPath[i].x, otherPath[i].y + this.sideLength);
-      let j = 0;
-      while(otherPath[i].z - (j + 1) * this.sideLength > 0) {
-        j += 1;
-      }
-      if(j > othershape.length - 1) {
-        continue;
-      }
-      othershape[j].push(s);
-    }
-    let foodshape = [];
-    for(let item of this.state.food) {
-      let s = new THREE.Shape();
-      s.moveTo(item.x, item.y);
-      s.lineTo(item.x + this.sideLength, item.y);
-      s.lineTo(item.x + this.sideLength, item.y + this.sideLength);
-      s.lineTo(item.x, item.y + this.sideLength);
-      foodshape.push(s);
-    }
+
 
     return (<React3
       mainCamera="camera" // this points to the perspectiveCamera below
@@ -438,122 +485,9 @@ class DoubleplyerPage extends React.Component {
           cameraName="camera"
         />
         <object3D>
-          <mesh
-            position={this.gridPosition[0]}
-          >
-            <extrudeGeometry
-              shapes={foodshape[0]}
-              steps={2}
-              amount={this.sideLength}
-              bevelEnable={true}
-              bevelThickness={20}
-              bevelSize={10}
-              bevelSegments={1}
-              dynamic={true}
-            />
-            <meshBasicMaterial
-              color={0x00ff00}
-              wireframe
-            />
-          </mesh>
-          <mesh
-            position={this.gridPosition[0]}
-          >
-
-            <extrudeGeometry
-              shapes={usershape[0]}
-              steps={2}
-              amount={this.sideLength}
-              bevelEnable={true}
-              bevelThickness={20}
-              bevelSize={10}
-              bevelSegments={1}
-              dynamic={true}
-            />
-            <meshNormalMaterial
-            />
-          </mesh>
-          <mesh
-            position={this.gridPosition[1]}
-          >  
-            <extrudeGeometry
-              shapes={usershape[1]}
-              steps={2}
-              amount={this.sideLength}
-              bevelEnable={true}
-              bevelThickness={20}
-              bevelSize={10}
-              bevelSegments={1}
-              dynamic={true}
-            />
-            <meshNormalMaterial
-            />
-          </mesh>
-          <mesh
-            position={this.gridPosition[2]}
-          >  
-            <extrudeGeometry
-              shapes={usershape[2]}
-              steps={2}
-              amount={this.sideLength}
-              bevelEnable={true}
-              bevelThickness={20}
-              bevelSize={10}
-              bevelSegments={1}
-              dynamic={true}
-            />
-            <meshNormalMaterial
-            />
-          </mesh>
-        <mesh
-            position={this.gridPosition[0]}
-          >
-
-            <extrudeGeometry
-              shapes={othershape[0]}
-              steps={2}
-              amount={this.sideLength}
-              bevelEnable={true}
-              bevelThickness={20}
-              bevelSize={10}
-              bevelSegments={1}
-              dynamic={true}
-            />
-            <meshNormalMaterial
-            />
-          </mesh>
-          <mesh
-            position={this.gridPosition[1]}
-          >  
-            <extrudeGeometry
-              shapes={othershape[1]}
-              steps={2}
-              amount={this.sideLength}
-              bevelEnable={true}
-              bevelThickness={20}
-              bevelSize={10}
-              bevelSegments={1}
-              dynamic={true}
-            />
-            <meshNormalMaterial
-            />
-          </mesh>
-          <mesh
-            position={this.gridPosition[2]}
-          >  
-            <extrudeGeometry
-              shapes={othershape[2]}
-              steps={2}
-              amount={this.sideLength}
-              bevelEnable={true}
-              bevelThickness={20}
-              bevelSize={10}
-              bevelSegments={1}
-              dynamic={true}
-            />
-            <meshNormalMaterial
-            />
-          </mesh>
+          {this.renderFood()}
+          {this.renderSnake(userPath)}
+          {this.renderSnake(otherPath)}
         </object3D>
         <object3D>
           <mesh>
