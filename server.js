@@ -80,10 +80,11 @@ const io = socketio.listen(server);
 // });
 let buffer = [];
 let rooms  = {};
+
 io.on('connection', function(socket){
   socket.on('newuser', function(newuser) { 
-    buffer.push({user : newuser, socket : socket});
-
+    if (buffer.length === 0||(buffer.length === 1 && buffer[0].user !== newuser))
+      buffer.push({user : newuser, socket : socket});
     if (buffer.length === 2 ){
       rooms[buffer[0].user] = buffer[1];
       rooms[buffer[1].user] = buffer[0];
@@ -91,17 +92,21 @@ io.on('connection', function(socket){
     } 
   }); 
   socket.on('game', function(data) { 
-    if (buffer.length === 1 && buffer[0].user === data.user)
-      socket.emit('mysnake', data);
-    else {
+    socket.emit('mysnake', data);
+    if (rooms[data.user]) {
       rooms[data.user].socket.emit('enemy', data);
       socket.emit('mysnake', data);
     }
   });  
-  socket.on('dicoonect', function(data) { 
-    let myuser = rooms[data.user].user;
-    delete rooms[data.user];
-    delete rooms[myuser];
+  socket.on('disconnect', function(data) {
+    if (rooms[data.user]) {
+      let enemy = rooms[data.user].user;
+      delete rooms[enemy];
+      delete rooms[data.user];  
+    }
+    if (buffer.length === 1 && buffer[0].user === data.user){
+      buffer = [];
+    }
   });
 
 });
