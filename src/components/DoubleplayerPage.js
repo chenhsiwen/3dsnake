@@ -121,6 +121,7 @@ class DoubleplyerPage extends React.Component {
   }
 
   componentWillUnmount() {
+    this.socket.emit('disconnect', this.props.user.uid); 
     document.removeEventListener('keydown', this._onKeyDown, false);
     clearInterval(this.timerID);
   }
