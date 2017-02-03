@@ -44,8 +44,8 @@ class DoubleplyerPage extends React.Component {
     let foods = [];
     foods.push(new THREE.Vector3(0, 1, 0.5).multiplyScalar(this.sideLength));
     for(let i = 0; i < 100; i++) {
-      let tx = (Math.random() - 0.5) * this.gridStep;
-      let ty = (Math.random() - 0.5) * this.gridStep;
+      let tx = Math.round((Math.random() - 0.5) * this.gridStep);
+      let ty = Math.round((Math.random() - 0.5) * this.gridStep);
       let tz = 0.5;
       let l = foods.length;
       let newFood = new THREE.Vector3(tx, ty, tz).multiplyScalar(this.sideLength);
@@ -212,13 +212,13 @@ class DoubleplyerPage extends React.Component {
     if(!exist) {
       playerVertices[0].shift();
     } else {
-      let tx = (Math.random() - 0.5) * this.gridStep;
-      let ty = (Math.random() - 0.5) * this.gridStep;
+      let tx = Math.round((Math.random() - 0.5) * this.gridStep);
+      let ty = Math.round((Math.random() - 0.5) * this.gridStep);
       let tz = 0.5;
       let newFood = new THREE.Vector3(tx, ty, tz).multiplyScalar(this.sideLength);
       while(exist) {
-        tx = (Math.random() - 0.5) * this.gridStep;
-        ty = (Math.random() - 0.5) * this.gridStep;
+        tx = Math.round((Math.random() - 0.5) * this.gridStep);
+        ty = Math.round((Math.random() - 0.5) * this.gridStep);
         newFood = new THREE.Vector3(tx, ty, tz).multiplyScalar(this.sideLength);
         exist = false;
         for(let i = 0, l = foods.length; i < l; i++) {
@@ -228,7 +228,7 @@ class DoubleplyerPage extends React.Component {
           }
         }
       }
-      foods.splice(indexOfNext);
+      foods.splice(indexOfNext, 1);
       foods.push(newFood);
     }
     playerVertices[0].push(next);
