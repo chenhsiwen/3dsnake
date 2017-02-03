@@ -44,8 +44,8 @@ class SingleplayerPage extends React.Component {
     let foods = [];
     foods.push(new THREE.Vector3(0, 1, 0.5).multiplyScalar(this.sideLength));
     for(let i = 0; i < 100; i++) {
-      let tx = (Math.random() - 0.5) * this.gridStep;
-      let ty = (Math.random() - 0.5) * this.gridStep;
+      let tx = Math.round((Math.random() - 0.5) * this.gridStep);
+      let ty = Math.round((Math.random() - 0.5) * this.gridStep);
       let tz = 0.5;
       let l = foods.length;
       let newFood = new THREE.Vector3(tx, ty, tz).multiplyScalar(this.sideLength);
@@ -93,6 +93,8 @@ class SingleplayerPage extends React.Component {
     this._checkBackward = this._checkBackward.bind(this);
     this._shouldUp = this._shouldUp.bind(this);
     this._shouldDown = this._shouldDown.bind(this);
+    this.renderFood = this.renderFood.bind(this);
+    this.renderSnake = this.renderSnake.bind(this);
   }
 
   componentDidMount() {
@@ -190,14 +192,13 @@ class SingleplayerPage extends React.Component {
     if(!exist) {
       playerVertices.shift();
     } else {
-      console.log('ate');
-      let tx = (Math.random() - 0.5) * this.gridStep;
-      let ty = (Math.random() - 0.5) * this.gridStep;
+      let tx = Math.round((Math.random() - 0.5) * this.gridStep);
+      let ty = Math.round((Math.random() - 0.5) * this.gridStep);
       let tz = 0.5;
       let newFood = new THREE.Vector3(tx, ty, tz).multiplyScalar(this.sideLength);
       while(exist) {
-        tx = (Math.random() - 0.5) * this.gridStep;
-        ty = (Math.random() - 0.5) * this.gridStep;
+        tx = Math.round((Math.random() - 0.5) * this.gridStep);
+        ty = Math.round((Math.random() - 0.5) * this.gridStep);
         newFood = new THREE.Vector3(tx, ty, tz).multiplyScalar(this.sideLength);
         exist = false;
         for(let i = 0, l = foods.length; i < l; i++) {
@@ -207,8 +208,9 @@ class SingleplayerPage extends React.Component {
           }
         }
       }
-      foods.splice(indexOfNext);
+      foods.splice(indexOfNext, 1);
       foods.push(newFood);
+      console.log('ate', playerVertices.length);
     }
     playerVertices.push(next);
 
@@ -294,6 +296,92 @@ class SingleplayerPage extends React.Component {
     return true;
   }
 
+  renderFood = () => {
+    let foodshape = [];
+    for(let item of this.state.food) {
+      let s = new THREE.Shape();
+      s.moveTo(item.x, item.y);
+      s.lineTo(item.x + this.sideLength, item.y);
+      s.lineTo(item.x + this.sideLength, item.y + this.sideLength);
+      s.lineTo(item.x, item.y + this.sideLength);
+      foodshape.push(s);
+      if(item.x < 20 * this.sideLength && item.x > -20 * this.sideLength && item.y < 16 * this.sideLength && item.y > -16 * this.sideLength) {
+        console.log(item.x, item.y, item.z);
+      }
+    }
+
+    const foods = (
+        <mesh
+          position={this.gridPosition[0]}
+        >
+          <extrudeGeometry
+            shapes={foodshape}
+            steps={2}
+            amount={this.sideLength}
+            bevelEnable={true}
+            bevelThickness={20}
+            bevelSize={10}
+            bevelSegments={1}
+            dynamic={true}
+          />
+          <meshBasicMaterial
+            color={0x00ff00}
+            wireframe
+          />
+        </mesh>
+    );
+    return (
+      <group>
+        {foods}
+      </group>
+    );
+  }
+
+  renderSnake = (path) => {
+    let shape = [[], [], [], [], [], []];
+    for(let i = 0, l = path.length; i<l; i++) {
+      let s = new THREE.Shape();
+      s.moveTo(path[i].x, path[i].y);
+      s.lineTo(path[i].x + this.sideLength, path[i].y);
+      s.lineTo(path[i].x + this.sideLength, path[i].y + this.sideLength);
+      s.lineTo(path[i].x, path[i].y + this.sideLength);
+      let j = 0;
+      while(path[i].z - (j + 1) * this.sideLength > 0) {
+        j += 1;
+      }
+      if(j > shape.length - 1) {
+        continue;
+      }
+      shape[j].push(s);
+    }
+
+    const snake = shape.map((layer, index) => {
+      return (
+        <mesh
+          position={this.gridPosition[index]}
+        >
+          <extrudeGeometry
+            shapes={layer}
+            steps={2}
+            amount={this.sideLength}
+            bevelEnable={true}
+            bevelThickness={20}
+            bevelSize={10}
+            bevelSegments={1}
+            dynamic={true}
+          />
+          <meshNormalMaterial
+          />
+        </mesh>
+    )});
+
+    return (
+      <group>
+        {snake}
+      </group>
+    );
+  }
+
   render() {
     const width = window.innerWidth; // canvas width
     const height = window.innerHeight; // canvas height
@@ -338,174 +426,99 @@ class SingleplayerPage extends React.Component {
       }
     }
       
-    let shape = [[], [], []];
-    for(let i = 0, l = this.state.player.path.length; i<l; i++) {
-      let s = new THREE.Shape();
-      s.moveTo(userPath[i].x, userPath[i].y);
-      s.lineTo(userPath[i].x + this.sideLength, userPath[i].y);
-      s.lineTo(userPath[i].x + this.sideLength, userPath[i].y + this.sideLength);
-      s.lineTo(userPath[i].x, userPath[i].y + this.sideLength);
-      let j = 0;
-      while(userPath[i].z - (j + 1) * this.sideLength > 0) {
-        j += 1;
-      }
-      if(j > shape.length - 1) {
-        continue;
-      }
-      shape[j].push(s);
-    }
 
-    let foodshape = [];
-    for(let item of this.state.food) {
-      let s = new THREE.Shape();
-      s.moveTo(item.x, item.y);
-      s.lineTo(item.x + this.sideLength, item.y);
-      s.lineTo(item.x + this.sideLength, item.y + this.sideLength);
-      s.lineTo(item.x, item.y + this.sideLength);
-      foodshape.push(s);
-    }
+    return (<div ref="container">
+      <div
+        style={{
+          position: 'absolute',
+          textAlign: 'center',
+          top: 25,
+          width: '100%',
+          padding: 5,
+          color: 'white',
+          zIndex: 100,
+        }}
+      >
+        <h2>Score: {this.state.player.path.length}</h2>
+      </div>
+      <React3
+        mainCamera="camera" // this points to the perspectiveCamera below
+        width={width}
+        height={height}
+        ref="react3"
+      >
+        <scene>
+          <perspectiveCamera
+            name="camera"
+            fov={30}
+            aspect={width / height}
+            near={0.1}
+            far={10000}
+            lookAt={lookAt}
+            position={cameraPosition}
+            rotation={cameraRotate}
+          />
+          <gridHelper 
+            size={this.gridSize}
+            step={this.gridStep}
+            scale={this.gridScale}
+            rotation={this.gridRotate}
+            colorCenterLine={0xffffff}
+            colorGrid={0x444444}
+          />
+          <cameraHelper
+            cameraName="camera"
+          />
+          <object3D>
+            {this.renderFood()}
+            {this.renderSnake(userPath)}
+          </object3D>
+          <object3D>
+            <mesh>
+              <tubeGeometry
+                path={this.boundary[0]}
+                radius={this.sideLength/2}
+              />
+              <meshBasicMaterial
+                color={0xff0000}
+                wireframe
+              />
+            </mesh>
+            <mesh>
+              <tubeGeometry
+                path={this.boundary[1]}
+                radius={this.sideLength/2}
+              />
+              <meshBasicMaterial
+                color={0xff0000}
+                wireframe
+              />
+            </mesh>
+            <mesh>
+              <tubeGeometry
+                path={this.boundary[2]}
+                radius={this.sideLength/2}
+              />
+              <meshBasicMaterial
+                color={0xff0000}
+                wireframe
+              />
+            </mesh>
+            <mesh>
+              <tubeGeometry
+                path={this.boundary[3]}
+                radius={this.sideLength/2}
+              />
+              <meshBasicMaterial
+                color={0xff0000}
+                wireframe
+              />
+            </mesh>
+          </object3D>
 
-    return (<React3
-      mainCamera="camera" // this points to the perspectiveCamera below
-      width={width}
-      height={height}
-      ref="react3"
-    >
-      <scene>
-        <perspectiveCamera
-          name="camera"
-          fov={30}
-          aspect={width / height}
-          near={0.1}
-          far={10000}
-          lookAt={lookAt}
-          position={cameraPosition}
-          rotation={cameraRotate}
-        />
-        <gridHelper 
-          size={this.gridSize}
-          step={this.gridStep}
-          scale={this.gridScale}
-          rotation={this.gridRotate}
-          colorCenterLine={0xffffff}
-          colorGrid={0x444444}
-        />
-        <cameraHelper
-          cameraName="camera"
-        />
-        <object3D>
-          <mesh
-            position={this.gridPosition[0]}
-          >
-            <extrudeGeometry
-              shapes={foodshape[0]}
-              steps={2}
-              amount={this.sideLength}
-              bevelEnable={true}
-              bevelThickness={20}
-              bevelSize={10}
-              bevelSegments={1}
-              dynamic={true}
-            />
-            <meshBasicMaterial
-              color={0x00ff00}
-              wireframe
-            />
-          </mesh>
-          <mesh
-            position={this.gridPosition[0]}
-          >
-            <extrudeGeometry
-              shapes={shape[0]}
-              steps={2}
-              amount={this.sideLength}
-              bevelEnable={true}
-              bevelThickness={20}
-              bevelSize={10}
-              bevelSegments={1}
-              dynamic={true}
-            />
-            <meshNormalMaterial
-            />
-          </mesh>
-          <mesh
-            position={this.gridPosition[1]}
-          >  
-            <extrudeGeometry
-              shapes={shape[1]}
-              steps={2}
-              amount={this.sideLength}
-              bevelEnable={true}
-              bevelThickness={20}
-              bevelSize={10}
-              bevelSegments={1}
-              dynamic={true}
-            />
-            <meshNormalMaterial
-            />
-          </mesh>
-          <mesh
-            position={this.gridPosition[2]}
-          >  
-            <extrudeGeometry
-              shapes={shape[2]}
-              steps={2}
-              amount={this.sideLength}
-              bevelEnable={true}
-              bevelThickness={20}
-              bevelSize={10}
-              bevelSegments={1}
-              dynamic={true}
-            />
-            <meshNormalMaterial
-            />
-          </mesh>
-        </object3D>
-        <object3D>
-          <mesh>
-            <tubeGeometry
-              path={this.boundary[0]}
-              radius={this.sideLength/2}
-            />
-            <meshBasicMaterial
-              color={0xff0000}
-              wireframe
-            />
-          </mesh>
-          <mesh>
-            <tubeGeometry
-              path={this.boundary[1]}
-              radius={this.sideLength/2}
-            />
-            <meshBasicMaterial
-              color={0xff0000}
-              wireframe
-            />
-          </mesh>
-          <mesh>
-            <tubeGeometry
-              path={this.boundary[2]}
-              radius={this.sideLength/2}
-            />
-            <meshBasicMaterial
-              color={0xff0000}
-              wireframe
-            />
-          </mesh>
-          <mesh>
-            <tubeGeometry
-              path={this.boundary[3]}
-              radius={this.sideLength/2}
-            />
-            <meshBasicMaterial
-              color={0xff0000}
-              wireframe
-            />
-          </mesh>
-        </object3D>
-
-      </scene>
-    </React3>);
+        </scene>
+      </React3>
+    </div>);
   }
 }
 
