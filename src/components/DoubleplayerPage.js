@@ -67,6 +67,7 @@ class DoubleplyerPage extends React.Component {
     this.state = {
       player: [
         {
+
           user: this.props.user.uid,
           path: [
             new THREE.Vector3(0, 0, 0.5).multiplyScalar(this.sideLength), 
@@ -80,16 +81,15 @@ class DoubleplyerPage extends React.Component {
             new THREE.Vector3(8, 0, 0.5).multiplyScalar(this.sideLength),
             new THREE.Vector3(9, 0, 0.5).multiplyScalar(this.sideLength),
           ],
-          direction: 39,
-          view: "",  // detect, front, gaze
+          
         },
         {
-          user2: {},
+          user: {},
           path: [],
-          direction: 0,
-          view: "",  // detect, front, gaze
         }
       ],
+      direction: 39,
+      view: "",  // detect, front, gaze
       food: foods,
       
     };
@@ -103,10 +103,10 @@ class DoubleplyerPage extends React.Component {
     this._shouldDown = this._shouldDown.bind(this);
     this.renderFood = this.renderFood.bind(this);
     this.renderSnake = this.renderSnake.bind(this);
-
+    this._onAnimate = this._onAnimate.bind(this);
     this.socket = io();
     this.socket.emit('newuser', this.props.user.uid); 
-
+    this.socket.on('newfood');
 
   }
 
@@ -122,66 +122,65 @@ class DoubleplyerPage extends React.Component {
 
   componentWillUnmount() {
     this.socket.emit('disconnect', this.props.user.uid); 
-    console.log('leave');
     document.removeEventListener('keydown', this._onKeyDown, false);
     clearInterval(this.timerID);
   }
 
   _onKeyDown = (event) => {
-    let playerInfo = this.state.player;
+    let { player , view , direction} = this.state;
     switch(event.keyCode) {
       case 37:
-        if(this._checkLeft(playerInfo[0].path)) {
-          playerInfo[0].direction = 37;
+        if(this._checkLeft(player[0].path)) {
+          direction = 37;
         }
         break;
       case 38:
-        if(this._checkForward(playerInfo[0].path)) {
-          playerInfo[0].direction = 38;
+        if(this._checkForward(player[0].path)) {
+          direction = 38;
         }
         break;
       case 39:
-        if(this._checkRight(playerInfo[0].path)) {
-          playerInfo[0].direction = 39;
+        if(this._checkRight(player[0].path)) {
+          direction = 39;
         }
         break;
       case 40:
-        if(this._checkBackward(playerInfo[0].path)) {
-          playerInfo[0].direction = 40;
+        if(this._checkBackward(player[0].path)) {
+          direction = 40;
         }
         break;
       case 68:
-        playerInfo[0].view = 'detect';
+        view = 'detect';
         break;
       case 70:
-        playerInfo[0].view = 'front';
+        view = 'front';
         break;
       case 71:
-        playerInfo[0].view = 'gaze';
+        view = 'gaze';
         break;
       case 83:
-        playerInfo[0].view = '';
+        view = '';
         break;
     }
-    this.setState({ player: playerInfo });
+    this.setState({ view: view , direction :direction });
   }
 
 
   
   move = () => {
-    let playerInfo = this.state.player;
+    let { player , view , direction} = this.state;
     let playerVertices = [
-      playerInfo[0].path,
-      playerInfo[1].path
+      player[0].path,
+      player[1].path
     ];
     let next = new THREE.Vector3();
     const now = playerVertices[0][playerVertices[0].length - 1];
     if(this._shouldDown(playerVertices[0])) {
       next.set(now.x, now.y, now.z - this.sideLength);
-    } else if(this._shouldUp(playerVertices[0], playerInfo[0].direction)) {
+    } else if(this._shouldUp(playerVertices[0], direction)) {
       next.set(now.x, now.y, now.z + this.sideLength);
     } else {
-      switch(this.state.player[0].direction){
+      switch(this.state.direction){
         case 37:
           //console.log('left');
           next.set(now.x - this.sideLength, now.y, now.z);
@@ -213,7 +212,6 @@ class DoubleplyerPage extends React.Component {
     if(!exist) {
       playerVertices[0].shift();
     } else {
-      console.log('ate');
       let tx = (Math.random() - 0.5) * this.gridStep;
       let ty = (Math.random() - 0.5) * this.gridStep;
       let tz = 0.5;
@@ -235,24 +233,24 @@ class DoubleplyerPage extends React.Component {
     }
     playerVertices[0].push(next);
 
-    playerInfo[0].path = playerVertices[0];
+    player[0].path = playerVertices[0];
     this.setState({ 
       food: foods,
     });
     this.socket.emit('game', this.state.player[0]); 
-    let that = this;
-    this.socket.on('enemy', function(data) {
-      let playerInfo = that.state.player;
-      playerInfo[1] = data;
-      that.setState({ player: playerInfo });
-    });
-    this.socket.on('mysnake', function(data) {
-      let playerInfo = that.state.player;
-      playerInfo[0] = data;
-      that.setState({ player: playerInfo });
-    });
+    
   }
+  _onAnimate = () =>{
 
+    let player = this.state.player;
+    this.socket.on('enemy', (data) => { 
+      player[1] = data;     
+    });
+    this.socket.on('mysnake', (data) => {
+      player[0] = data;
+    });
+    this.setState({ player: player });
+  }
   _checkLeft = (path) => {
     const now = path[path.length - 1];
     const prev = path[path.length - 2];
@@ -421,23 +419,23 @@ class DoubleplyerPage extends React.Component {
     let lookAt = this.gridPosition[0]; 
     let cameraPosition = this.cameraPosition;
     let cameraRotate = new THREE.Euler();
-    if(this.state.player[0].view === '') {
+    if(this.state.view === '') {
       lookAt = this.gridPosition[0]; 
     } else if(this.state.player[0].view === 'detect') {
       cameraPosition = new THREE.Vector3(0, 0, 3000);
       cameraPosition.add(userPath[userPath.length-1]);
       lookAt = userPath[userPath.length-1];
-    } else if(this.state.player[0].view === 'gaze') {
+    } else if(this.state.view === 'gaze') {
       cameraRotate = this.gridRotate;
       cameraPosition = new THREE.Vector3(0, 0, this.sideLength);
       cameraPosition.add(userPath[userPath.length-1]);
       lookAt = this.state.player[1].path[this.state.player[1].path.length-1];
-    } else if(this.state.player[0].view === 'front') {
+    } else if(this.state.view === 'front') {
       cameraRotate = this.gridRotate;
       cameraPosition = new THREE.Vector3(0, 0, this.sideLength);
       cameraPosition.add(userPath[userPath.length-1]);
       lookAt = new THREE.Vector3();
-      switch(this.state.player[0].direction) {
+      switch(this.state.direction) {
         case 37:
           cameraPosition.add(new THREE.Vector3(2 * this.sideLength, 0, 0));
           lookAt.addVectors(cameraPosition, new THREE.Vector3(-this.sideLength, 0, 0));
@@ -464,6 +462,7 @@ class DoubleplyerPage extends React.Component {
       width={width}
       height={height}
       ref="react3"
+      onAnimate={this._onAnimate}
     >
       <scene>
         <perspectiveCamera

@@ -48,8 +48,8 @@ const io = socketio.listen(server);
 let buffer = [];
 let rooms  = {};
 
-io.on('connection', function(socket){
-  socket.on('newuser', function(newuser) { 
+io.on('connection', (socket) => {
+  socket.on('newuser', (newuser) => { 
     if (buffer.length === 0||(buffer.length === 1 && buffer[0].user !== newuser))
       buffer.push({user : newuser, socket : socket});
     if (buffer.length === 2 ){
@@ -58,14 +58,14 @@ io.on('connection', function(socket){
       buffer = [];
     } 
   }); 
-  socket.on('game', function(data) { 
+  socket.on('game', (data) => { 
     socket.emit('mysnake', data);
     if (rooms[data.user]) {
       rooms[data.user].socket.emit('enemy', data);
       socket.emit('mysnake', data);
     }
   });  
-  socket.on('disconnect', function(data) {
+  socket.on('disconnect', (data) => {
     if (rooms[data.user]) {
       let enemy = rooms[data.user].user;
       delete rooms[enemy];
