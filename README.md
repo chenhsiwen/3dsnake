@@ -1,7 +1,7 @@
-# a small blog practice
-In-class practice. Using webpack, babel, react, draft js, express, mongoose
+# a 3D snake game
+After-class practice. Using Nodejs, react, socket io , firbase
 
-## install
+## install (notice that the nodejs version sould >= 6.9.2)
 ```
 npm install
 ```
